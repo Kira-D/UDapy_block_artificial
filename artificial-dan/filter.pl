@@ -42,12 +42,19 @@ sub get_ktin_dan
     push(@conditions, "node.upos == 'VERB'");
     push(@conditions, "node.parent.upos == 'VERB'");
     # Both the candidate and its parent must have at least two arguments or adjuncts.
-    push(@conditions, "len([c for c in node.children if c.deprel in {'nsubj', 'obj', 'iobj', 'obl', 'advmod'}]) >= 2");
-    push(@conditions, "len([c for c in node.parent.children if c.deprel in {'nsubj', 'obj', 'iobj', 'obl', 'advmod'}]) >= 2");
+    ###!!! What about dependency relation subtypes, such as obl:arg and obl:agent?
+    my $aadeprels = "{'nsubj', 'obj', 'iobj', 'obl', 'obl:arg', 'obl:agent', 'advmod'}";
+    push(@conditions, "len([c for c in node.children if c.deprel in $aadeprels]) >= 2");
+    push(@conditions, "len([c for c in node.parent.children if c.deprel in $aadeprels]) >= 2");
+    # We need matching types of arguments and adjuncts. Construct intersection of the argument/adjunct children, require that it has at least two elements.
+    push(@conditions, "len({c.deprel for c in node.children if c.deprel in $aadeprels} & {c.deprel for c in node.parent.children if c.deprel in $aadeprels}) >= 2");
     # Both the candidate and its parent must have a subject child.
     ###!!! There are examples of gapping without a subject. However, Kira's block ud.ConvertOrphans will not survive if there is no subject!
     push(@conditions, "any(c.deprel in {'nsubj'} for c in node.parent.children)");
     push(@conditions, "any(c.deprel in {'nsubj'} for c in node.children)");
+    # The most visible valency mismatches are between transitive and intransitive verbs.
+    # Require that either both verbs have a direct object, or none of them has it.
+    push(@conditions, "(all(c.deprel not in {'obj'} for c in node.children) and all(c.deprel not in {'obj'} for c in node.parent.children) or any(c.deprel in {'obj'} for c in node.children) and any(c.deprel in {'obj'} for c in node.parent.children))");
     # The parent of the candidate node must not have children of the following types.
     push(@conditions, "all(c.deprel not in {'cop', 'ccomp', 'xcomp'} for c in node.parent.children)");
     # The candidate node must not have children of the following types.
