@@ -39,10 +39,10 @@ sub get_ktin_dan
     # Necessary conditions for the node that is a candidate for deletion.
     my @conditions = ('not node.parent.is_root()');
     push(@conditions, "node.deprel == 'conj'");
-    push(@conditions, "node.parent.upos == 'VERB'");
     push(@conditions, "node.upos == 'VERB'");
-    # The parent of the candidate node must have at least three children (two arguments and the candidate).
-    push(@conditions, 'len([c for c in node.parent.children]) >= 3');
+    push(@conditions, "node.parent.upos == 'VERB'");
+    # The parent of the candidate node must have at least two arguments or adjuncts.
+    push(@conditions, "len([c for c in node.parent.children if c.deprel in {'nsubj', 'obj', 'iobj', 'obl', 'advmod'}]) >= 2");
     # Both the candidate and its parent must have a subject child (###!!! this is just an approximation; there are examples of gapping without a subject).
     push(@conditions, "any(c.deprel in {'nsubj'} for c in node.parent.children)");
     push(@conditions, "any(c.deprel in {'nsubj'} for c in node.children)");
