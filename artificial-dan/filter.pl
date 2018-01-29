@@ -41,9 +41,11 @@ sub get_ktin_dan
     push(@conditions, "node.deprel == 'conj'");
     push(@conditions, "node.upos == 'VERB'");
     push(@conditions, "node.parent.upos == 'VERB'");
-    # The parent of the candidate node must have at least two arguments or adjuncts.
+    # Both the candidate and its parent must have at least two arguments or adjuncts.
+    push(@conditions, "len([c for c in node.children if c.deprel in {'nsubj', 'obj', 'iobj', 'obl', 'advmod'}]) >= 2");
     push(@conditions, "len([c for c in node.parent.children if c.deprel in {'nsubj', 'obj', 'iobj', 'obl', 'advmod'}]) >= 2");
-    # Both the candidate and its parent must have a subject child (###!!! this is just an approximation; there are examples of gapping without a subject).
+    # Both the candidate and its parent must have a subject child.
+    ###!!! There are examples of gapping without a subject. However, Kira's block ud.ConvertOrphans will not survive if there is no subject!
     push(@conditions, "any(c.deprel in {'nsubj'} for c in node.parent.children)");
     push(@conditions, "any(c.deprel in {'nsubj'} for c in node.children)");
     # The parent of the candidate node must not have children of the following types.
