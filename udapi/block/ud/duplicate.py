@@ -20,8 +20,9 @@ class Duplicate(Block):
                     if len([n for n in tree.descendants if 'Mark' in n.misc]) > 1:
                         if not all(n.upos == 'VERB' and 'Mark' in n.misc and n.form not in self.cop for n in tree.descendants):
                             list_of_mark = [n for n in tree.descendants if 'Mark' in n.misc]
-                            for marked_token in list_of_mark[1:]:
+                            for i, marked_token in enumerate(list_of_mark[1:]):
                                 new_tree = deepcopy(tree)
+                                new_tree.sent_id = new_tree.sent_id + '-copy' + str(i + 1)
                                 for new_token in new_tree.descendants:
                                     if 'Mark' in new_token.misc and new_token.ord != marked_token.ord:
                                         del new_token.misc['Mark']
