@@ -5,15 +5,26 @@ use open ':utf8';
 binmode(STDIN, ':utf8');
 binmode(STDOUT, ':utf8');
 binmode(STDERR, ':utf8');
+use Getopt::Long;
 
 my $infile = $ARGV[0]; # ../unidep/UD_English/en-ud-test.conllu
+
+my $visualize = 0;
+GetOptions
+(
+    'visualize' => \$visualize
+);
 
 #my $keep_tree_if_node = get_ktin_kira();
 my $keep_tree_if_node = get_ktin_dan();
 # We will put the keep-tree filter in double quotation marks. If it contains any quotation marks, escape them.
 $keep_tree_if_node =~ s/"/\\"/g;
 
-my $udapy = 'udapy -s util.Filter keep_tree_if_node="'.$keep_tree_if_node.'" mark="Mark" | udapy write.TextModeTrees';
+my $udapy = 'udapy -s util.Filter keep_tree_if_node="'.$keep_tree_if_node.'" mark="Mark"';
+if($visualize)
+{
+    $udapy .= ' | udapy write.TextModeTrees';
+}
 my $command = "cat $infile | $udapy";
 print STDERR ("$command\n");
 system($command);
