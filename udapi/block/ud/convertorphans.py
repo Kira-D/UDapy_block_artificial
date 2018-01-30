@@ -19,7 +19,7 @@ class ConvertOrphans(Block):
         self.subst = {'he': 'she', 'she': 'he', 'i':'you', 'you': 'they', 'they': 'you', 'we': 'you'}
         self.core_ellipsis = {'aux', 'cop', 'compound'}
         self.none_core_ellipsis = {'nsubj', 'iobj', 'obj', 'aux', 'compound', 'mark', 'cop'}
-        self.cop_form = {'was', 'were', 'is', 'are', "'m"}
+        self.cop_form = {'was', 'were', 'is', 'are', "'m", 'am'}
            
     def process_node(self, node):
         if 'Mark' in node.misc:
@@ -27,7 +27,8 @@ class ConvertOrphans(Block):
             children_to_process = []
 
             # VERB depends on VERB 
-            if node.upos == 'VERB' and node.parent.upos == 'VERB':
+            if node.upos == 'VERB' and node.parent.upos == 'VERB' and \
+               node.parent.form not in self.cop_form and node.form not in self.cop_form:
 
                 # nsubj forms are the same
                 # THINK: here it is also possible to copy a sentence and make two kinds of ellipsis using one sentence
@@ -64,7 +65,7 @@ class ConvertOrphans(Block):
                             children_to_process.append(child)
                     self.rehang_alternative(node, children_to_process, children_to_delete, deleteNode=True)
 
-            elif node.parent.upos == 'VERB':
+            elif node.parent.upos == 'VERB' and node.parent.form not in self.cop_form:
 
                 if node.upos in {'PROPN', 'NOUN', 'NUM', 'SYM', 'ADJ', 'ADV'}:
                     # 'real' ellipsis
@@ -96,7 +97,8 @@ class ConvertOrphans(Block):
                         #node.misc['Processed'] = 'deleteSentence'
 
             # VERB depends on a clause with 'cop'
-            elif node.upos == 'VERB' and any(c.deprel in {'cop'} for c in node.parent.children):
+            elif (node.parent.upos == 'VERB' and node.parent.form in self.cop_form) or \
+                 any(c.deprel in {'cop'} for c in node.parent.children):
                 for child in node.children:
                     if child.deprel.split(':')[0] in self.none_core_ellipsis or \
                        child.form in {'nt', "n't"} or (child.form == 'not' and child.prev_node.upos == 'AUX'):

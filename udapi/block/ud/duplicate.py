@@ -18,7 +18,7 @@ class Duplicate(Block):
             for tree in bundle:
                 if self._should_process_tree(tree):
                     if len([n for n in tree.descendants if 'Mark' in n.misc]) > 1:
-                        if not all(n.upos == 'VERB' and 'Mark' in n.misc and n.form not in self.cop for n in tree.descendants):
+                        if any(n.upos == 'VERB' and 'Mark' in n.misc and n.form in self.cop for n in tree.descendants):
                             list_of_mark = [n for n in tree.descendants if 'Mark' in n.misc]
                             for i, marked_token in enumerate(list_of_mark[1:]):
                                 new_tree = deepcopy(tree)
