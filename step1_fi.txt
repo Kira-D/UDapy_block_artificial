@@ -1,0 +1,35 @@
+cat ../UD_Finnish/fi-ud-train.conllu | udapy -s util.Filter keep_tree_if_node="not node.parent.is_root() and node.deprel == 'conj' and node.upos == 'VERB' and node.parent.upos == 'VERB' and len([c for c in node.parent.children if c.deprel not in {'conj', 'aux', 'punct', 'cc'}]) >= 2 and any(c.deprel in {'nsubj', 'obj', 'obl'} for c in node.parent.children) and any(c.deprel in {'nsubj', 'obj', 'obl'} for c in node.children) and len([c for c in node.children if c.deprel not in {'conj', 'aux', 'punct', 'cc'}]) >= 2 and node.parent.lemma == node.lemma and all(c.deprel not in {'xcomp', 'xcomp:ds'} for c in node.children if c.upos=='VERB') and all(c.deprel not in {'ccomp', 'xcomp', 'xcomp:ds'} for c in node.parent.children if c.upos=='VERB') and all(not(c.lemma == 'se' and (c.deprel == 'nsubj' or c.deprel=='obj')) for c in node.children) and all(not(c.lemma=='ei' and c.deprel=='aux') for c in node.children)" mark="Mark" | udapy write.TextModeTrees
+
+
+## COMMENTS
+
+# basics:
+not node.parent.is_root()
+node.deprel == 'conj'
+node.upos == 'VERB'
+node.parent.upos == 'VERB'
+
+# parent must have at least one core dependent (subject, object or oblique)
+# and total at leat two dependents which are not conj, aux, punct or cc
+len([c for c in node.parent.children if c.deprel not in {'conj', 'aux', 'punct', 'cc'}]) >= 2
+any(c.deprel in {'nsubj', 'obj', 'obl'} for c in node.parent.children)
+
+# node must have at least one core dependent (subject, object or oblique)
+# and total at leat two dependents which are not conj, aux, punct or cc
+any(c.deprel in {'nsubj', 'obj', 'obl'} for c in node.children)
+len([c for c in node.children if c.deprel not in {'conj', 'aux', 'punct', 'cc'}]) >= 2
+
+# node and parent must have same lemma (elliptic), otherwise it produces too many errors
+node.parent.lemma == node.lemma
+
+# parent or node cannot have verbal xcomp dependent (verb chains, the case usually does not match) 
+all(c.deprel not in {'xcomp', 'xcomp:ds'} for c in node.children if c.upos=='VERB')
+all(c.deprel not in {'ccomp', 'xcomp', 'xcomp:ds'} for c in node.parent.children if c.upos=='VERB')
+
+# subject or object cannot be repeated with pronoun 'se', sounds weird to repeat it without repeating the verb
+all(not(c.lemma == 'se' and (c.deprel == 'nsubj' or c.deprel=='obj')) for c in node.children)
+
+# node cannot have negation verb because we should leave the negation, otherwise case does not match anymore
+all(not(c.lemma=='ei' and c.deprel=='aux') for c in node.children)
+
+
