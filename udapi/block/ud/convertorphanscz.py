@@ -19,9 +19,9 @@ class ConvertOrphansCz(Block):
         # Substitution of pronouns is probably useless because Czech is a pro-drop language.
         self.subst = {'on': 'ona', 'ona': 'on', 'já':'ty', 'vy': 'oni', 'oni': 'vy', 'my': 'vy'}
         # Auxiliary children to remove if parent is elided. (DZ: I don't know why it is called core_ellipsis.)
-        self.core_ellipsis = {'aux', 'cop', 'compound'}
+        self.core_ellipsis = {'aux', 'cop', 'expl', 'compound'}
         # DZ: I don't know why this is called non_core_ellipsis but these are children to be deleted too!
-        self.none_core_ellipsis = {'nsubj', 'obj', 'iobj', 'aux', 'cop', 'compound', 'mark'}
+        self.none_core_ellipsis = {'nsubj', 'obj', 'iobj', 'aux', 'cop', 'expl', 'compound', 'mark'}
         self.cop_form = {'byl', 'byla', 'bylo', 'byli', 'byly', 'jsem', 'jsi', 'je', 'jsme', 'jste', 'jsou', 'budu', 'budeš', 'bude', 'budeme', 'budete', 'budou', 'nebyl', 'nebyla', 'nebylo', 'nebyli', 'nebyly', 'nejsem', 'nejsi', 'není', 'nejsme', 'nejste', 'nejsou', 'nebudu', 'nebudeš', 'nebude', 'nebudeme', 'nebudete', 'nebudou'}
 
     def process_node(self, node):
