@@ -43,7 +43,10 @@ sub get_ktin_dan
     push(@conditions, "node.parent.upos == 'VERB'");
     # Both the candidate and its parent must have at least two arguments or adjuncts.
     ###!!! What about dependency relation subtypes, such as obl:arg and obl:agent?
-    my $aadeprels = "{'nsubj', 'obj', 'iobj', 'obl', 'obl:arg', 'obl:agent', 'advmod'}";
+    ###!!! Removing 'advmod' from the selection. In theory adverbs are legitimate candidates.
+    ###!!! But in practice we usually get single-word sentential or manner adverbs that would not be normally used in gapping:
+    ###!!! stále, většinou, obvykle, spíš, zatím, jen, také, opět, zvlášť, dost, dosud, vůbec, ani, ne
+    my $aadeprels = "{'nsubj', 'obj', 'iobj', 'obl', 'obl:arg', 'obl:agent'}";
     push(@conditions, "len([c for c in node.children if c.deprel in $aadeprels]) >= 2");
     push(@conditions, "len([c for c in node.parent.children if c.deprel in $aadeprels]) >= 2");
     # We need matching types of arguments and adjuncts. Construct intersection of the argument/adjunct children, require that it has at least two elements.
