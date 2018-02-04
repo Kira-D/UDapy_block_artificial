@@ -61,7 +61,7 @@ class ConvertOrphansCz(Block):
 
                 else: # subject forms differ
                     for child in node.children:
-                        if child.deprel.split(':')[0] in self.core_ellipsis or:
+                        if child.deprel.split(':')[0] in self.core_ellipsis:
                             children_to_delete.append(child)
                         else:
                             children_to_process.append(child)
