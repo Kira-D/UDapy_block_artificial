@@ -222,19 +222,19 @@ class ConvertOrphansCz(Block):
             if child.deprel.split(':')[0] == 'nsubj':
                 child.misc['newNode'] = str(node.parent.ord) + ':' + str(node.deprel)
                 child.misc['Processed'] = 'Yes'
-                if any(c.form.lower() == 'but' for c in node.children):
-                    change_form = [c for c in node.children if c.form.lower() == 'but']
-                    change_form[0].form = 'and'
-                    change_form[0].lemma = 'and'
+                if any(c.form.lower() == 'ale' for c in node.children):
+                    change_form = [c for c in node.children if c.form.lower() == 'ale']
+                    change_form[0].form = 'a'
+                    change_form[0].lemma = 'a'
                     change_form[0].parent = child
-                elif any(c.form.lower() == 'and' for c in node.children):
-                    change_form = [c for c in node.children if c.form.lower() == 'and']
+                elif any(c.form.lower() == 'a' for c in node.children):
+                    change_form = [c for c in node.children if c.form.lower() == 'a']
                     change_form[0].parent = child
                 else:
                     shift_here = min(child.children + [child], key=lambda x: x.ord)
-                    child.create_child(form='and', lemma='and',	upos='CCONJ', deprel='cc').shift_before_node(shift_here)
+                    child.create_child(form='a', lemma='a', upos='CCONJ', deprel='cc').shift_before_node(shift_here)
                 shift_here = max(child.children + [child], key=lambda x: x.ord)
-                start = child.create_child(form='too', lemma='too',	upos='ADV', deprel='orphan')
+                start = child.create_child(form='také', lemma='také', upos='ADV', deprel='orphan')
                 start.shift_after_node(shift_here)
                 if node.root.descendants[-1].deprel == 'punct':
                     start.misc['SpaceAfter']='No'
