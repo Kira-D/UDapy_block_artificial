@@ -7,7 +7,7 @@ binmode(STDOUT, ':utf8');
 binmode(STDERR, ':utf8');
 use Getopt::Long;
 
-my $infile = $ARGV[0]; # ../../unidep/UD_English/en-ud-test.conllu
+my $infiles = join(' ', @ARGV); # ../../unidep/UD_English/en-ud-test.conllu
 
 my $visualize = 0;
 GetOptions
@@ -25,7 +25,7 @@ if($visualize)
 {
     $udapy .= ' | udapy write.TextModeTrees';
 }
-my $command = "cat $infile | $udapy";
+my $command = "cat $infiles | $udapy";
 print STDERR ("$command\n");
 system($command);
 
