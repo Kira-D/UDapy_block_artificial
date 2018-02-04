@@ -145,7 +145,7 @@ class ConvertOrphansCz(Block):
             if c.ord != the_rest.ord:
                 if the_rest.deprel in {'punct', 'cc', 'conj', 'mark'}:
                     the_rest.misc['newNode'] = str(c.ord) + ':' + str(the_rest.deprel)
-                elif the_rest.deprel.split(':')[0] in {'obj', 'obl', 'advmod'}:
+                elif the_rest.deprel.split(':')[0] in {'obj', 'iobj', 'obl', 'advmod'}:
                     the_rest.misc['newNode'] = str(c.ord) + ':orphan'
                 elif the_rest.deprel.split(':')[0] in {'det', 'amod', 'case', 'nmod'}:
                     continue ###??? DZ: Why?
