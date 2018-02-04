@@ -1,0 +1,38 @@
+(See also filter.pl.) I ignore advmod although it is in theory a
+legitimate candidate. In practice, we often get sentential or
+manner adverbs that would hardly trigger gapping: stále, většinou,
+obvykle, spíš, zatím, jen, také, opět, zvlášť, dost, dosud, vůbec,
+ani.
+
+For two objects (or iobjects) we should also require that they have
+the same morphological case. At the moment I approximate it in
+filter.pl be requiring that the same cases are available under both
+verbs.
+
+Maybe we should avoid the verb "být" even if not marked as copula.
+Although there would be legitimate examples even with copula ("on
+je chytrý doma, ona ve škole").
+
+It sounds strange if there are three conjoined clauses, second
+predicate is not elided, third is.
+
+Word order and clitics play a role in whether gapping sounds
+plausible.
+
+There should not be too many (how many?) words between the two
+verbs. Otherwise gapping is unnatural because the speaker and the
+listener would forget what the first predicate was.
+
+It sounds strange if the second sentence promotes the subject
+"což". Or not just subject. Also object "jemuž". Should we change
+it to "ostatní" or something?
+
+Strange: the elided predicate is in tighter coordination with
+another verb, they share the arguments. They both should be elided
+otherwise it sounds weird: C1, hnutí Duha postaví (tohle ven) a
+bude provozovat (tohle zůstalo) stánek, ...
+
+Coordinate relative clause ("který/nsubj ... a který/nsubj ...)
+Nothing reasonable can be constructed from this, we have to drop
+the sentence. Also, look for LEMMA "který" because the actual form
+can be in other genders or numbers ("která", "které", ...)
