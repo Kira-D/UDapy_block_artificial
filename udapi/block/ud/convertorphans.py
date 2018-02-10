@@ -30,8 +30,19 @@ class ConvertOrphans(Block):
             if node.upos == 'VERB' and node.parent.upos == 'VERB' and \
                node.parent.form not in self.cop_form and node.form not in self.cop_form:
 
+                #filter out non-matching subtrees
+                matching_rels = [{'obj'}, {'iobj'}, {'obl', 'advmod'}]
+                matches = []
+                parent_rels_map = [c.deprel.split(':')[0] for c in node.parent.children]
+                node_rels_map = [c.deprel.split(':')[0] for c in node.children]
+                for rel_set in matching_rels:
+                    if any(r in rel_set for r in parent_rels_map) and any(r in rel_set for r in node_rels_map):
+                        break
+                else:
+                    node.misc['Processed'] = 'deleteSentence'
+                    return
+
                 # nsubj forms are the same
-                # THINK: here it is also possible to copy a sentence and make two kinds of ellipsis using one sentence
                 if [c.form.lower() for c in node.children if c.deprel.split(':')[0] == 'nsubj'] == \
                    [c.form.lower() for c in node.parent.children if c.deprel.split(':')[0] == 'nsubj']:
                     for child in node.children:
@@ -40,6 +51,15 @@ class ConvertOrphans(Block):
                             children_to_delete.append(child)
                         else:
                             children_to_process.append(child)
+
+                    # check conj
+                    if any(ch.deprel == 'conj' for ch in children_to_process):
+                        conj_nodes = [ch for ch in children_to_process if ch.deprel == 'conj']
+                        for conj_node in conj_nodes:
+                            if not any(chld.deprel == 'nsubj' for chld in conj_node.children):
+                                conj_node.misc['newNode'] = 'deleteThis'
+                                children_to_process.remove(conj_node)
+
                     if len([elem for elem in children_to_process if elem.deprel not in {'punct', 'cc', 'mark'}]) >= 2:
                         self.rehang(node, children_to_process)
                         for child in children_to_delete:
@@ -67,38 +87,23 @@ class ConvertOrphans(Block):
 
             elif node.parent.upos == 'VERB' and node.parent.form not in self.cop_form:
 
-                if node.upos in {'PROPN', 'NOUN', 'NUM', 'SYM', 'ADJ', 'ADV'}:
+                if node.upos in {'PROPN', 'NOUN', 'NUM', 'SYM', 'ADJ', 'ADV', 'PRON'}:
                     # 'real' ellipsis
                     if all(c.deprel not in {'cop', 'aux'} for c in node.children):
                         self.rehang_detected_orphan(node, node.children)
 
                     else:
-                        # change the word form if needed
-                        self.change_form(node)
-
-                        for child in node.children:
-                            if child.deprel.split(':')[0] in self.none_core_ellipsis or \
-                               child.form in {'nt', "n't"} or (child.form == 'not' and child.prev_node.upos == 'AUX'):
-                                children_to_delete.append(child)
-                            else:
-                                children_to_process.append(child)
-
-                        if node.upos in {'ADJ', 'ADV'} and \
-                           len([elem for elem in children_to_process if elem.deprel.split(':')[0] not in \
-                           {'punct', 'cc', 'conj', 'det', 'amod', 'case', 'nmod'}]) >= 2:
-                                self.rehang(node, children_to_process)
-                                for child in children_to_delete:
-                                    child.misc['newNode'] = 'deleteThis'
-                        else:
-                            # pass relaition and the head to the subject
-                            self.rehang_to_subj(node)
+                        node.misc['Processed'] = 'deleteSentence'
 
                     #else:
-                        #node.misc['Processed'] = 'deleteSentence'
+                    #    node.misc['Processed'] = 'deleteSentence'
 
             # VERB depends on a clause with 'cop'
-            elif (node.parent.upos == 'VERB' and node.parent.form in self.cop_form) or \
-                 any(c.deprel in {'cop'} for c in node.parent.children):
+            elif ((node.parent.upos == 'VERB' and node.parent.form in self.cop_form) or \
+                 any(c.deprel in {'cop'} for c in node.parent.children)) and \
+                 ((node.upos == 'VERB' and node.form in self.cop_form) or \
+                 any(c.deprel in {'cop'} for c in node.children)):
+
                 for child in node.children:
                     if child.deprel.split(':')[0] in self.none_core_ellipsis or \
                        child.form in {'nt', "n't"} or (child.form == 'not' and child.prev_node.upos == 'AUX'):
@@ -106,17 +111,15 @@ class ConvertOrphans(Block):
                     else:
                         children_to_process.append(child)
 
-                if len([elem for elem in children_to_process if elem.deprel not in {'punct', 'cc', 'conj', 'mark', 'parataxis'}]) >= 2:
+                if len([elem for elem in children_to_process if elem.deprel not in {'det', 'aux', 'cop', 'punct', 'cc', 'conj', 'mark', 'parataxis', 'discourse'}]) >= 2:
                     self.rehang(node, children_to_process)
                     for c in children_to_delete:
                         c.misc['newNode'] = 'deleteThis'
                 else:
-                    self.change_form(node)
-                    self.rehang_to_subj(node)
-                    node.misc['newNode'] = 'deleteThis'
+                    node.misc['Processed'] = 'deleteSentence'
 
             else:
-                node.misc['Processed'] = 'No'
+                node.misc['Processed'] = 'deleteSentence'
 
     def promote_node(self, node, c, children_to_process):
         c.misc['newNode'] = str(node.parent.ord) + ':' + str(node.deprel)
@@ -124,9 +127,9 @@ class ConvertOrphans(Block):
             if c.ord != the_rest.ord:
                 if the_rest.deprel in {'punct', 'cc', 'conj'}:
                     the_rest.misc['newNode'] = str(c.ord) + ':' + str(the_rest.deprel)
-                elif the_rest.deprel.split(':')[0] in {'obl', 'advmod'}:
+                elif the_rest.deprel.split(':')[0] in {'obl', 'advmod', 'nmod'}:
                     the_rest.misc['newNode'] = str(c.ord) + ':orphan'
-                elif the_rest.deprel.split(':')[0] in {'det', 'amod', 'case', 'nmod'}:
+                elif the_rest.deprel.split(':')[0] in {'det', 'amod', 'case'}:
                     continue
                 else:
                     the_rest.misc['newNode'] = str(c.ord) + ':ALARM1'
@@ -199,37 +202,4 @@ class ConvertOrphans(Block):
                     if child.lemma != '':
                         child.lemma = child.form
                         break
-
-    def rehang_to_subj(self, node):
-        for child in node.children:
-            if child.deprel.split(':')[0] == 'nsubj':
-                child.misc['newNode'] = str(node.parent.ord) + ':' + str(node.deprel)
-                child.misc['Processed'] = 'Yes'
-                if any(c.form.lower() == 'but' for c in node.children):
-                    change_form = [c for c in node.children if c.form.lower() == 'but']
-                    change_form[0].form = 'and'
-                    change_form[0].lemma = 'and'
-                    change_form[0].parent = child
-                elif any(c.form.lower() == 'and' for c in node.children):
-                    change_form = [c for c in node.children if c.form.lower() == 'and']
-                    change_form[0].parent = child
-                else:
-                    shift_here = min(child.children + [child], key=lambda x: x.ord)
-                    child.create_child(form='and', lemma='and',	upos='CCONJ', deprel='cc').shift_before_node(shift_here)
-                shift_here = max(child.children + [child], key=lambda x: x.ord)
-                start = child.create_child(form='too', lemma='too',	upos='ADV', deprel='orphan')
-                start.shift_after_node(shift_here)
-                if node.root.descendants[-1].deprel == 'punct':
-                    start.misc['SpaceAfter']='No'
-                if node.root.descendants[-1].deprel == 'punct':
-                    end = -1
-                else:
-                    end = None
-                for token in node.root.descendants[start.ord:end]:
-                    token.misc['newNode'] = 'deleteThis'
-                    if any(c.deprel.split(':')[0] in {'advmod', 'obl'} for c in node.children):
-                        for c in node.children:
-                            if c.deprel.split(':')[0] in {'advmod', 'obl'}:
-                                c.parent = child
-                break
 
