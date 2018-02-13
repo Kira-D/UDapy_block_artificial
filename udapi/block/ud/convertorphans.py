@@ -7,7 +7,7 @@ from udapi.core.block import Block
 class ConvertOrphans(Block):
     """Converts full sentences into artificial.
         Usage: cat file-to-convert.conllu | udapy -s ud.ConvertOrphans
-        Notes: 
+        Notes:
         If a sentence is processed, this information is added to the misc column:
             'Processed=Yes'marker is added to the node that will be deleted
              new heads and labels are added to nodes that should be rehung ('newNode=new-head:relation')
@@ -20,13 +20,13 @@ class ConvertOrphans(Block):
         self.core_ellipsis = {'aux', 'cop', 'compound'}
         self.none_core_ellipsis = {'nsubj', 'iobj', 'obj', 'aux', 'compound', 'mark', 'cop'}
         self.cop_form = {'was', 'were', 'is', 'are', "'m", 'am'}
-           
+
     def process_node(self, node):
         if 'Mark' in node.misc:
             children_to_delete = []
             children_to_process = []
 
-            # VERB depends on VERB 
+            # VERB depends on VERB
             if node.upos == 'VERB' and node.parent.upos == 'VERB' and \
                node.parent.form not in self.cop_form and node.form not in self.cop_form:
 
@@ -147,9 +147,9 @@ class ConvertOrphans(Block):
                 else:
                     the_rest.misc['newNode'] = str(c.ord) + ':ALARM2'
         node.misc['newNode'] = str(c.ord) + ':orphan'
-        
+
     def rehang(self, node, children_to_process, c=None):
-        if c is None:        
+        if c is None:
             for c in children_to_process:
                 if c.deprel.split(':')[0] == 'obl':
                     self.promote_node(node, c, children_to_process)
@@ -180,8 +180,10 @@ class ConvertOrphans(Block):
             else:
                 node.misc['newNode'] = str(to_promote[0].ord) + ':orphan'
         else:
+            # The candidate verb has two or more subjects.
+            # That should not happen in manually annotated data but it cannot be excluded in automatically parsed data.
             node.misc['Processed'] = 'No'
-            node.misc['newNode'] = 'ALARM3'
+            node.misc['newNode'] = 'deleteSentence'
 
     def rehang_detected_orphan(self, node, children_to_process):
         to_promote = [c for c in children_to_process if c.deprel.split(':')[0] == 'nsubj']
