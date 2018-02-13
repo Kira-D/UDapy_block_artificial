@@ -192,8 +192,7 @@ class ConvertOrphansCz(Block):
         else:
             # The candidate verb has two or more subjects.
             # That should not happen in manually annotated data but it cannot be excluded in automatically parsed data.
-            node.misc['Processed'] = 'Yes'
-            node.misc['newNode'] = 'deleteSentence'
+            node.misc['Processed'] = 'deleteSentence'
 
     def rehang_detected_orphan(self, node, children_to_process):
         to_promote = [c for c in children_to_process if c.deprel.split(':')[0] == 'nsubj']
