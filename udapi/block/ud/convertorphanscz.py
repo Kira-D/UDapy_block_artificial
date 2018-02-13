@@ -32,10 +32,9 @@ class ConvertOrphansCz(Block):
             # VERB depends on VERB
             if node.upos == 'VERB' and node.parent.upos == 'VERB' and \
                node.parent.form not in self.cop_form and node.form not in self.cop_form:
-                # Avoid gapping if the subject of the second clause is "což" (relation of consequence).
-                ###!!! It would be better to rule such sentences out in the filtering step.
+                ###!!! Late filtering. It would be better to rule such sentences out in the filtering step.
                 ###!!! But filtering of the web parsebank takes four hours and I do not want to re-run it.
-                if [c.form.lower() for c in node.children if c.deprel.split(':')[0] == 'nsubj'][0] == 'což':
+                if not self.is_good_candidate(node):
                     node.misc['Processed'] = 'No'
                     return
                 # nsubj forms are the same
@@ -120,6 +119,26 @@ class ConvertOrphansCz(Block):
 
             else:
                 node.misc['Processed'] = 'No'
+
+    def is_good_candidate(self, node):
+        """
+        We pre-filtered the corpus in the first step, before applying this block. However,
+        there are some further conditions (often language-specific) that should be tested
+        and if they are not met, the candidate should be discarded.
+        """
+        ###!!! It would be better to rule such sentences out in the filtering step.
+        ###!!! But filtering of the web parsebank takes four hours and I do not want to re-run it.
+        # Avoid gapping if the subject of the second clause is "což" (relation of consequence).
+        if [c.form.lower() for c in node.children if c.deprel.split(':')[0] == 'nsubj'][0] == 'což':
+            return False
+        aadeprels = {'nsubj', 'obj', 'iobj', 'obl', 'obl:arg', 'obl:agent'}
+        cdeps = {str(c.deprel) + ':' + str([adp.lemma for adp in c.children if c.deprel == 'case'][0]) + ':' + str(c.feats['Case']) for c in node.children if c.deprel in aadeprels}
+        pdeps = {str(c.deprel) + ':' + str([adp.lemma for adp in c.children if c.deprel == 'case'][0]) + ':' + str(c.feats['Case']) for c in node.parent.children if c.deprel in aadeprels}
+        # There must be at least two children of the same type under both verbs.
+        # That is, the intersection of pdeps and cdeps must have at least two members.
+        if len(pdeps & cdeps) < 2:
+            return False
+        return True
 
     def promote_node(self, node, c, children_to_process):
         """
