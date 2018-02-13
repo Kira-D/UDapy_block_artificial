@@ -32,7 +32,12 @@ class ConvertOrphansCz(Block):
             # VERB depends on VERB
             if node.upos == 'VERB' and node.parent.upos == 'VERB' and \
                node.parent.form not in self.cop_form and node.form not in self.cop_form:
-
+                # Avoid gapping if the subject of the second clause is "což" (relation of consequence).
+                ###!!! It would be better to rule such sentences out in the filtering step.
+                ###!!! But filtering of the web parsebank takes four hours and I do not want to re-run it.
+                if [c.form.lower() for c in node.children if c.deprel.split(':')[0] == 'nsubj'][0] == 'což':
+                    node.misc['Processed'] = 'No'
+                    return
                 # nsubj forms are the same
                 # THINK: here it is also possible to copy a sentence and make two kinds of ellipsis using one sentence
                 if [c.form.lower() for c in node.children if c.deprel.split(':')[0] == 'nsubj'] == \
