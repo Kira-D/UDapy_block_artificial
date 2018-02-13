@@ -33,3 +33,6 @@ filter.pl input.conllu | udapy -s ud.Duplicate | udapy -s ud.ConvertOrphansCz > 
 Real example:
 ./filter.pl ../../../unidep/UD_Czech/cs-ud-dev.conllu | udapy -s ud.Duplicate | udapy -s ud.ConvertOrphansCz > cs-ud-dev-converted.conllu
 
+Apply the suggested conversions. Remove sentences where no orphan appears at the end (if we skipped their processing due to a late filter
+in ud.ConvertOrphansCz, for example):
+cat cs-ud-dev-converted.conllu | udapy -s ud.FinalizeOrphans util.Filter keep_tree_if_node="node.deprel == 'orphan'" > cs-ud-dev-finalized.conllu
