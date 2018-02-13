@@ -132,13 +132,28 @@ class ConvertOrphansCz(Block):
         if [c.form.lower() for c in node.children if c.deprel.split(':')[0] == 'nsubj'][0] == 'což':
             return False
         aadeprels = {'nsubj', 'obj', 'iobj', 'obl', 'obl:arg', 'obl:agent'}
-        cdeps = {str(c.deprel) + ':' + str([adp.lemma for adp in c.children if c.deprel == 'case'][0]) + ':' + str(c.feats['Case']) for c in node.children if c.deprel in aadeprels}
-        pdeps = {str(c.deprel) + ':' + str([adp.lemma for adp in c.children if c.deprel == 'case'][0]) + ':' + str(c.feats['Case']) for c in node.parent.children if c.deprel in aadeprels}
+        cdeps = {self.get_dependent_type(c) for c in node.children if c.deprel in aadeprels}
+        pdeps = {self.get_dependent_type(c) for c in node.parent.children if c.deprel in aadeprels}
         # There must be at least two children of the same type under both verbs.
         # That is, the intersection of pdeps and cdeps must have at least two members.
         if len(pdeps & cdeps) < 2:
             return False
         return True
+
+    def get_dependent_type(self, node):
+        """
+        Returns a string that identifies the type of dependent.
+        Dependency relation label (deprel) is accompanied by morphological case and adposition, if applicable.
+        Therefore a dative object is different from a genitive object.
+        """
+        type = str(node.deprel)
+        adpositions = [adp.lemma for adp in node.children if adp.deprel == 'case']
+        if len(adpositions) >= 1:
+            type = type + ':' + str(adpositions[0])
+        case = node.feats['Case']
+        if case != '':
+            type = type + ':' + str(case).lower()
+        return type
 
     def promote_node(self, node, c, children_to_process):
         """
